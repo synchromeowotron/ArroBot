@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const fetch = require('node-fetch');
 
 const { Client, GatewayIntentBits } = require('discord.js');
+var emojiCache;
 
 const client = new Client({
 	intents: [
@@ -11,13 +12,15 @@ const client = new Client({
 		GatewayIntentBits.GuildMembers,
 	],
 });
-
+  
 API_URL = 'https://api-inference.huggingface.co/models/Mogwhy/DialoGPT-medium-Arrobot';
 
 console.log("Initializing . . .")
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    emojiCache = client.emojis.cache;
+    console.log(emojiCache.toString());
 });
 
 client.on('messageCreate', async message => {
@@ -27,9 +30,10 @@ client.on('messageCreate', async message => {
     }
 
     if (message.content.startsWith("Arro,")) {
+      var inputText = message.content.slice(5);
       const payload = {
           inputs: {
-              text: message.content
+              text: inputText
           }
       };
       
@@ -50,7 +54,17 @@ client.on('messageCreate', async message => {
       } else if (data.hasOwnProperty('error')) { 
           botResponse = data.error;
       }
-      console.log(botResponse.toString);
+      
+      if (botResponse.toString().startsWith(" :blob")) {
+        var emojiSearchString = botResponse.toString().substring(
+                                botResponse.toString().indexOf(":") + 1, 
+                                botResponse.toString().lastIndexOf(":"));
+        emojiCache.forEach((K, V) => {
+          if (K.name.toString() === emojiSearchString) {
+            botResponse = K.toString();
+          }
+        })
+      }
       message.reply(botResponse);
     }
 })
